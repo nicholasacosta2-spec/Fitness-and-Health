@@ -50,8 +50,13 @@ h1{font-size:30px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em
   align-items:center;justify-content:center;border:1.5px solid var(--line)}
 .box.on{border:none}
 .box svg{width:14px;height:14px}
-.ex .name{flex:1;font-size:15px}
-.ex.done .name{color:var(--muted);text-decoration:line-through}
+.ex .name{flex:1;display:flex;flex-direction:column;gap:2px}
+.exname{font-size:15px}
+.sub{font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.setbadge{flex:0 0 auto;font-size:17px;font-weight:800;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  display:flex;align-items:baseline;gap:1px}
+.setbadge i{font-size:10px;font-style:normal;font-weight:600;opacity:.7}
+.ex.done .exname{color:var(--muted);text-decoration:line-through}
 .ex.extra .name{color:var(--muted);opacity:.55}
 .tier{display:flex;gap:8px}
 .tier button{flex:1;min-height:56px;border-radius:12px;background:var(--surface2);
@@ -72,7 +77,7 @@ h1{font-size:30px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em
 .icon svg{width:19px;height:19px}
 .dayhead{display:flex;align-items:center;justify-content:space-between;width:100%;
   min-height:68px;padding:14px 18px}
-.exrow{display:flex;align-items:center;justify-content:space-between;min-height:44px;
+.exrow{display:flex;align-items:center;justify-content:space-between;min-height:52px;
   border-top:1px solid var(--line);font-size:15px;gap:10px}
 .exrow .n{width:20px;flex:0 0 auto;font-size:11px;color:var(--muted)}
 .exrow.t1{border-left:2px solid var(--brass)}
@@ -147,20 +152,25 @@ const svg=function(p,sw){return '<svg viewBox="0 0 24 24" fill="none" stroke="cu
 /* Exercises are ordered most-important-first. Minimum = first 3, Short = first 5, Full = all. */
 const CYCLE=[
  {key:"A",name:"Push",focus:"Chest · Shoulders · Triceps",color:"#d4a24e",ex:[
-   ["Incline DB Press","40"],["DB Shoulder Press","35"],["Overhead Tricep Extension","new"],
-   ["Flat DB Press","40"],["Cable Lateral Raises","10"],
-   ["Incline Cable Fly","new"],["Dips","100"]]},
+   ["Incline DB Press","40",4,"6-10"],["DB Shoulder Press","35",3,"8-12"],
+   ["Overhead Tricep Extension","new",3,"10-15"],
+   ["Flat DB Press","40",3,"8-12"],["Cable Lateral Raises","10",3,"12-20"],
+   ["Incline Cable Fly","new",3,"10-15"],["Dips","100",3,"8-12"]]},
  {key:"B",name:"Pull",focus:"Back · Biceps",color:"#4a8f83",ex:[
-   ["Lat Pulldown","90"],["Cable Row","60"],["Preacher Curls","85"],
-   ["Row","60"],["Incline DB Curls","new"],
-   ["Rear Delt Cable Fly","15"],["Hammer Curls","new"]]},
+   ["Lat Pulldown","90",4,"8-12"],["Cable Row","60",3,"8-12"],
+   ["Preacher Curls","85",3,"8-12"],
+   ["Row","60",3,"8-12"],["Incline DB Curls","new",3,"10-15"],
+   ["Rear Delt Cable Fly","15",3,"15-20"],["Hammer Curls","new",3,"10-15"]]},
  {key:"C",name:"Chest & Arms",focus:"Chest · Biceps · Triceps",color:"#8a8fd4",ex:[
-   ["Cable Chest Press","19"],["Skull Crushers","new"],["Spider Curls","50"],
-   ["Pectoral Fly","70"],["JM Press","20"],
-   ["Low-to-High Crossover","new"],["Reverse Cable Curls","20"],["African Curls","20"]]}
+   ["Cable Chest Press","19",4,"8-12"],["Skull Crushers","new",3,"8-12"],
+   ["Spider Curls","50",3,"10-15"],
+   ["Pectoral Fly","70",3,"10-15"],["JM Press","20",3,"8-12"],
+   ["Low-to-High Crossover","new",3,"12-15"],["Reverse Cable Curls","20",2,"12-15"],
+   ["African Curls","20",2,"12-15"]]}
 ];
+
 const TIERS=[
- {id:"min",label:"Minimum",n:3,time:"~20 min",why:"Wiped after a shift. Show up, do three, leave."},
+ {id:"min",label:"Minimum",n:3,time:"~20 min",why:"Wiped after a shift. Three exercises, one extra set each to make up some of the lost volume. Show up, do three, leave."},
  {id:"short",label:"Short",n:5,time:"~35 min",why:"Default. Nearly the same stimulus as full."},
  {id:"full",label:"Full",n:99,time:"~50 min",why:"Days off, or when you've got energy to spare."}
 ];
@@ -238,6 +248,11 @@ const view=document.getElementById('view'),nav=document.getElementById('nav');
 function current(){return CYCLE[cyc.i];}
 function tierObj(){for(var i=0;i<TIERS.length;i++)if(TIERS[i].id===cyc.tier)return TIERS[i];return TIERS[1];}
 function activeEx(){return current().ex.slice(0,tierObj().n);}
+function setsFor(e){return cyc.tier==='min'?e[2]+1:e[2];}
+function volLine(e,sets){
+  var w=e[1]==='new'?'find your weight':(e[1]==='—'?'bodyweight':e[1]+' lb');
+  return sets+' × '+e[3]+' · '+w;
+}
 function sortedLog(){return log.slice().sort(function(a,b){return new Date(a.date)-new Date(b.date);});}
 function last7(){var c=0,now=Date.now();sessions.forEach(function(s){
   if(now-new Date(s.date+'T00:00:00').getTime()<7*864e5)c++;});return c;}
@@ -282,15 +297,19 @@ function viewNext(){
    +'</div><div style="padding:0 18px"><div class="bar" style="margin-top:0"><i style="width:'+pct+'%;background:'+w.color+'"></i></div></div>';
   act.forEach(function(e,i){
     var on=!!chk.items[i];
+    var st=setsFor(e);
     h+='<button class="ex '+(on?'done':'')+'" data-act="tog" data-i="'+i+'">'
       +'<span class="box '+(on?'on':'')+'"'+(on?' style="background:'+w.color+'"':'')+'>'
       +(on?'<span style="color:var(--bg);display:block;width:14px;height:14px">'+svg(I.check,3)+'</span>':'')+'</span>'
-      +'<span class="name">'+esc(e[0])+'</span>'+chipFor(e[1])+'</button>';
+      +'<span class="name"><span class="exname">'+esc(e[0])+'</span>'
+      +'<span class="sub">'+volLine(e,st)+'</span></span>'
+      +'<span class="setbadge" style="color:'+(on?'var(--muted)':w.color)+'">'+st+'<i>×'+e[3]+'</i></span></button>';
   });
   if(t.n<w.ex.length){
     w.ex.slice(t.n).forEach(function(e){
       h+='<div class="ex extra"><span class="box" style="opacity:.35"></span>'
-        +'<span class="name">'+esc(e[0])+'</span>'
+        +'<span class="name"><span class="exname">'+esc(e[0])+'</span>'
+        +'<span class="sub">'+volLine(e,e[2])+'</span></span>'
         +'<span class="chip" style="font-size:10px;opacity:.6">skipped</span></div>';
     });
   }
@@ -349,14 +368,29 @@ function viewTraining(){
       w.ex.forEach(function(e,i){
         var lab=i<3?'min':i<5?'short':'full';
         s+='<div class="exrow'+(i<3?' t1':'')+'"><span class="n">'+(i+1)+'</span>'
-          +'<span style="flex:1">'+esc(e[0])+'</span>'
-          +'<span class="chip" style="font-size:10px;opacity:.6">'+lab+'</span>'
-          +chipFor(e[1])+'</div>';
+          +'<span style="flex:1"><span style="display:block">'+esc(e[0])+'</span>'
+          +'<span class="sub">'+volLine(e,e[2])+'</span></span>'
+          +'<span class="chip" style="font-size:10px;opacity:.6">'+lab+'</span></div>';
       });
       s+='</div>';
     }
     return s+'</section>';
   }).join('');
+
+  h+='<section class="card pad"><div class="eyebrow" style="margin-bottom:12px">Sets &amp; reps</div>'
+   +'<div class="stack guide" style="gap:12px">'
+   +'<div><h4>Why the numbers differ</h4><p>Big compound lifts get 3-4 sets in the 6-12 range — '
+   +'that\'s where you can load heavy enough to drive growth. Isolation and cable work gets 3 sets at 10-20, '
+   +'since those muscles respond better to reps than to load.</p></div>'
+   +'<div><h4>The first exercise gets 4 sets</h4><p>You\'re freshest at the start of a session, so the '
+   +'hardest lift goes first and earns the extra set.</p></div>'
+   +'<div><h4>Minimum sessions add a set</h4><p>On a Minimum day each of the three exercises gets one extra set. '
+   +'It costs about 3 minutes and claws back some of the volume you gave up by cutting the session short.</p></div>'
+   +'<div><h4>Leave 1-2 reps in the tank</h4><p>Stop each set when you could have done one or two more with good form. '
+   +'Grinding to total failure on every set mostly adds fatigue, which is the last thing you need after a 10-hour shift.</p></div>'
+   +'<div><h4>Rest</h4><p>2-3 min after compounds, 60-90 sec after isolation work. If you\'re short on time, '
+   +'cut rest on the isolation lifts, not the heavy ones.</p></div>'
+   +'</div></section>';
 
   h+='<div class="note"><b style="color:var(--text)">Physical therapy stays separate.</b> '
    +'PT is an appointment, not part of the rotation — keep going Wednesdays regardless of where you are in the cycle.</div>';
