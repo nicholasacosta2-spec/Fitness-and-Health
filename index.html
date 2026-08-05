@@ -1478,6 +1478,10 @@ var FOODDB=[
  ["Uncrustables PB&J", 210, 6, "1 sandwich"],
  ["Lunchable, turkey & cheese", 260, 12, "1 pack"],
  ["Instant Mac & Cheese cup", 220, 7, "1 cup"],
+ ["Main St Bistro Baked Mac & Cheese", 290, 15, "1 cup (220g)"],
+ ["Main St Bistro Baked Mac & Cheese, half tray", 580, 30, "2 cups"],
+ ["Main St Bistro Baked Scalloped Potatoes", 190, 5, "1 cup"],
+ ["Main St Bistro Mashed Potatoes", 190, 3, "2/3 cup"],
  ["Cup Noodles", 290, 6, "1 cup"],
  ["SpaghettiOs", 180, 7, "1 cup"],
  ["Chef Boyardee Ravioli", 220, 8, "1 cup"],
@@ -1500,6 +1504,35 @@ var FOODDB=[
  ["Nutter Butter 2ct", 130, 2, "2 cookies"],
  ["Rice Krispies Treat", 90, 1, "1 bar"],
  ["Nature Valley Bar 2ct", 190, 4, "1 pack"],
+ ["Nature Valley Crunchy Oats 'n Honey", 190, 4, "2-bar pack"],
+ ["Nature Valley Crunchy Peanut Butter", 190, 4, "2-bar pack"],
+ ["Nature Valley Crunchy Maple Brown Sugar", 190, 3, "2-bar pack"],
+ ["Nature Valley Crunchy Cinnamon", 190, 3, "2-bar pack"],
+ ["Nature Valley Crunchy Apple Crisp", 190, 3, "2-bar pack"],
+ ["Nature Valley Crunchy Pecan Crunch", 200, 3, "2-bar pack"],
+ ["Nature Valley Crunchy Dark Chocolate", 190, 3, "2-bar pack"],
+ ["Nature Valley Crunchy, single bar", 95, 2, "1 bar"],
+ ["Nature Valley Sweet & Salty Peanut", 170, 4, "1 bar"],
+ ["Nature Valley Sweet & Salty Almond", 160, 3, "1 bar"],
+ ["Nature Valley Sweet & Salty Cashew", 160, 3, "1 bar"],
+ ["Nature Valley Sweet & Salty Dark Chocolate Peanut Almond", 170, 4, "1 bar"],
+ ["Nature Valley Protein Peanut Butter Dark Chocolate", 190, 10, "1 bar"],
+ ["Nature Valley Protein Coconut Almond", 190, 10, "1 bar"],
+ ["Nature Valley Protein Salted Caramel Nut", 190, 10, "1 bar"],
+ ["Nature Valley Protein Honey Peanut Almond", 190, 10, "1 bar"],
+ ["Nature Valley Fruit & Nut Trail Mix Bar", 140, 3, "1 bar"],
+ ["Nature Valley Fruit & Nut Dark Chocolate Cherry", 140, 2, "1 bar"],
+ ["Nature Valley Wafer Bar Peanut Butter Chocolate", 230, 6, "1 bar"],
+ ["Nature Valley Wafer Bar Vanilla", 230, 4, "1 bar"],
+ ["Nature Valley Layered Nut Butter Peanut", 230, 6, "1 bar"],
+ ["Nature Valley Layered Nut Butter Almond", 230, 5, "1 bar"],
+ ["Nature Valley Packed Peanut Almond Dark Chocolate", 240, 7, "1 bar"],
+ ["Nature Valley Peanut Butter Granola Cups 2ct", 200, 5, "2 cups"],
+ ["Nature Valley Almond Butter Granola Cups 2ct", 210, 5, "2 cups"],
+ ["Nature Valley Granola Bites Chocolate pouch", 140, 3, "1 pouch"],
+ ["Nature Valley Soft-Baked Oatmeal Blueberry", 190, 3, "1 bar"],
+ ["Nature Valley Soft-Baked Oatmeal Cinnamon Brown Sugar", 190, 3, "1 bar"],
+ ["Nature Valley Soft-Baked Muffin Bar Blueberry", 180, 2, "1 bar"],
  ["Clif Bar", 250, 9, "1 bar"],
  ["RXBar", 210, 12, "1 bar"],
  ["Kind Bar", 180, 6, "1 bar"],
@@ -2663,7 +2696,7 @@ var ALIAS=[[/\bcaptain\b/g,"cap'n"],[/\bcapt\b/g,"cap'n"],
  [/\bpowerbar\b/g,"protein bar"],[/\bveggies?\b/g,"vegetable"],
  [/\bshake\b/g,"shake"],[/\bqp\b/g,"quarter pounder"],[/\bmcgriddle\b/g,"mcgriddles"],
  [/\bnuggets?\b/g,"mcnuggets"],[/\bfrappuccino\b/g,"frappe"],
- [/\bcoke zero\b/g,"diet soda"],[/\band\b/g,"&"],[/\btwisty\b/g,"twistee"],[/\bjeremiahs?\b/g,"jeremiah's"],[/\bkellys\b/g,"kelly's"],[/\bcoldstone\b/g,"cold stone"],[/\bben & jerry'?s?\b/g,"ben & jerry"],
+ [/\bcoke zero\b/g,"diet soda"],[/\band\b/g,"&"],[/\btwisty\b/g,"twistee"],[/\bmain street\b/g,"main st"],[/\bjeremiahs?\b/g,"jeremiah's"],[/\bkellys\b/g,"kelly's"],[/\bcoldstone\b/g,"cold stone"],[/\bben & jerry'?s?\b/g,"ben & jerry"],
  [/\bcanes\b/g,"cane's"],[/\bbdubs\b/g,"bww"],
  [/\bbuffalo wild wings\b/g,"bww"],[/\bmac\b/g,"mac"],
  [/\bdairy queen\b/g,"dq"],[/\bblizzard\b/g,"blizzard"]];
@@ -2909,7 +2942,7 @@ function vFood(){
    +'<div class="srch"><span class="sico">'+svg(I.search,2.2)+'</span>'
    +'<input id="q" placeholder="Search food..." value="'+esc(q)+'" autocomplete="off" '
    +'autocorrect="off" autocapitalize="none" spellcheck="false">'
-   +(q?'<button class="clr" data-clr="1">'+svg(I.x,2.4)+'</button>':'')
+   +'<button class="clr" data-clr="1" style="display:'+(q?'flex':'none')+'">'+svg(I.x,2.4)+'</button>'
    +'</div><div id="sres">'+resultsHTML()+'</div></div></section>';
 
   h+='<section><button class="acc" data-add="1">'
@@ -3174,7 +3207,8 @@ function chart(){
 var view=document.getElementById('view'),nav=document.getElementById('nav'),crumb=document.getElementById('crumb');
 function paintResults(){var box=document.getElementById('sres');if(box)box.innerHTML=resultsHTML();}
 document.addEventListener('input',function(e){
-  if(e.target&&e.target.id==='q'){q=e.target.value;qServ={};paintResults();}
+  if(e.target&&e.target.id==='q'){q=e.target.value;qServ={};paintResults();
+    var xb=document.querySelector('.clr');if(xb)xb.style.display=q?'flex':'none';}
 });
 function render(){
   view.innerHTML=[vNext,vTrain,vFood,vMonth,vWeight,vTips][tab]();
@@ -3225,8 +3259,8 @@ document.addEventListener('click',function(ev){
   if(t.dataset.water!==undefined){buzz();addWater(parseInt(t.dataset.water,10));render();return;}
   if(t.dataset.del!==undefined){buzz(12);delFood(parseInt(t.dataset.del,10));render();return;}
   if(t.dataset.q!==undefined){buzz(12);
-    var q=decodeURIComponent(t.dataset.q).split('|');
-    addFood(q[0],parseInt(q[1],10),parseInt(q[2],10));render();return;}
+    var qp=decodeURIComponent(t.dataset.q).split('|');
+    addFood(qp[0],parseInt(qp[1],10),parseInt(qp[2],10));render();return;}
   if(t.dataset.cat!==undefined){buzz();var cn=decodeURIComponent(t.dataset.cat);
     openCat=openCat===cn?null:cn;render();return;}
   if(t.dataset.add!==undefined){buzz();addOpen=!addOpen;render();
