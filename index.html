@@ -194,6 +194,31 @@ section{background:var(--card);border:1px solid var(--line);border-radius:var(--
 .fin{min-height:48px;border-radius:11px;background:var(--card2);border:1px solid var(--line);
   color:var(--text);font-size:16px;padding:0 12px}
 
+/* food search */
+.srch{position:relative;display:flex;align-items:center}
+.srch input{width:100%;min-height:50px;border-radius:12px;background:var(--card2);
+  border:1px solid var(--line);color:var(--text);font-size:16px;padding:0 40px}
+.srch input:focus{border-color:rgba(232,147,60,.5);outline:none}
+.sico{position:absolute;left:13px;width:16px;height:16px;color:var(--faint);
+  pointer-events:none;display:block}
+.clr{position:absolute;right:8px;width:32px;height:32px;border-radius:8px;color:var(--faint);
+  display:flex;align-items:center;justify-content:center}
+.clr svg{width:14px;height:14px}
+.reclist{margin-top:6px}
+.fres{padding:11px 0;border-top:1px solid var(--line)}
+.fres:first-child{border-top:none}
+.fr-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.fr-n{font-size:14.5px;font-weight:600;line-height:1.25}
+.fr-bot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px}
+.fr-m{font-size:11.5px;color:var(--faint)}
+.fr-act{display:flex;align-items:center;gap:4px;flex:0 0 auto}
+.sv{width:32px;height:34px;border-radius:8px;background:var(--card2);border:1px solid var(--line);
+  color:var(--dim);font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.svn{width:26px;text-align:center;font-size:13px;font-weight:800;color:var(--text)}
+.fadd{width:38px;height:34px;border-radius:8px;background:var(--brass);color:var(--bg);
+  display:flex;align-items:center;justify-content:center;margin-left:3px}
+.fadd svg{width:15px;height:15px}
+
 /* calendar */
 .mhead{display:flex;align-items:center;justify-content:space-between;padding:14px 12px 10px}
 .mnav{width:40px;height:40px;border-radius:10px;background:var(--card2);color:var(--dim);
@@ -265,6 +290,7 @@ var I={
  cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>',
  drop:'<path d="M12 22a7 7 0 0 0 7-7c0-5-7-13-7-13S5 10 5 15a7 7 0 0 0 7 7Z"/>',
  x:'<path d="M18 6 6 18M6 6l12 12"/>',
+ search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
  left:'<path d="m15 18-6-6 6-6"/>',
  right:'<path d="m9 18 6-6-6-6"/>'
 };
@@ -326,7 +352,7 @@ var TIPS=[
  ]},
  {id:"track",title:"Tracking",sub:"Food, water, and the calendar",icon:"cal",color:"#93aeb8",items:[
   ["Log food as you eat it","Not at the end of the day. Retroactive logging is where accuracy goes to die — you forget the drink, the handful of fries, the second helping."],
-  ["Quick-add covers most of it","The McDonald's and staple lists are one tap each. Custom entry is there for everything else. Numbers are label values and reasonable estimates, not lab-precise — close enough to steer by."],
+  ["Search fills it in for you","Type a food name and the calories and protein populate automatically from a built-in list of 220 common items — fast food, groceries, and whole foods. Adjust servings with − / + if you had more or less than the listed portion. Recently used foods sit at the top when the box is empty."],
   ["Protein is the number to watch","If calories run a little over or under on a given day it evens out. Missing protein repeatedly is what actually costs you muscle in a recomp."],
   ["Water","95oz is the target, more on lifting days. Since you are at McDonald's five days a week, the cup buttons match the US sizes exactly — Kids 12, Small 16, Medium 21, Large 30. Leave the ice toggle on and they count actual liquid rather than cup volume, which is roughly 30% less."],
   ["The calendar is the honest view","Dots show workouts, food, and water goal per day. A month with gaps isn't a failure — it's information. Look for whether the gaps cluster around long shifts, and plan Minimum sessions for those stretches."],
@@ -364,6 +390,229 @@ var TARGET={cal:2800,pro:190,water:95};
 /* McDonald's US cup sizes, fl oz */
 var CUPS=[["Kids",12],["Small",16],["Medium",21],["Large",30]];
 function cupOz(o){return ice?Math.round(o*0.7):o;}
+
+var FOODDB=[
+ ["McDouble",390,22,"1 sandwich"],
+ ["Big Mac",590,25,"1 sandwich"],
+ ["Quarter Pounder w/ Cheese",520,30,"1 sandwich"],
+ ["Double Quarter Pounder w/ Cheese",740,48,"1 sandwich"],
+ ["Hamburger (McDonald's)",250,12,"1 sandwich"],
+ ["Cheeseburger (McDonald's)",300,15,"1 sandwich"],
+ ["McChicken",400,14,"1 sandwich"],
+ ["McCrispy Chicken Sandwich",470,26,"1 sandwich"],
+ ["Filet-O-Fish",390,16,"1 sandwich"],
+ ["Chicken McNuggets 4pc",170,10,"4 pieces"],
+ ["Chicken McNuggets 6pc",250,15,"6 pieces"],
+ ["Chicken McNuggets 10pc",420,24,"10 pieces"],
+ ["Chicken McNuggets 20pc",830,48,"20 pieces"],
+ ["Fries small (McDonald's)",230,3,"small"],
+ ["Fries medium (McDonald's)",320,4,"medium"],
+ ["Fries large (McDonald's)",480,6,"large"],
+ ["Egg McMuffin",310,17,"1 sandwich"],
+ ["Sausage McMuffin",400,14,"1 sandwich"],
+ ["Sausage McMuffin w/ Egg",480,20,"1 sandwich"],
+ ["Bacon Egg & Cheese Biscuit",460,19,"1 biscuit"],
+ ["Sausage Biscuit",460,11,"1 biscuit"],
+ ["Hotcakes",580,9,"3 cakes"],
+ ["Hash Brown",140,1,"1 piece"],
+ ["Sausage Burrito",310,13,"1 burrito"],
+ ["Apple Slices",15,0,"1 bag"],
+ ["Fruit & Yogurt Parfait",150,4,"1 parfait"],
+ ["McFlurry Oreo",510,12,"regular"],
+ ["Vanilla Cone",200,5,"1 cone"],
+ ["Coke medium (McDonald's)",210,0,"21 oz"],
+ ["Coke large (McDonald's)",290,0,"30 oz"],
+ ["Sweet Tea medium",160,0,"21 oz"],
+ ["Diet Coke",0,0,"any size"],
+ ["Black Coffee",0,0,"any size"],
+ ["Iced Coffee w/ cream & sugar",180,2,"medium"],
+ ["Chocolate Shake medium",620,13,"medium"],
+ ["Apple Pie (baked)",230,2,"1 pie"],
+ ["Whopper (Burger King)",670,28,"1 sandwich"],
+ ["Chicken Sandwich (Chick-fil-A)",440,29,"1 sandwich"],
+ ["Grilled Chicken Sandwich (Chick-fil-A)",390,28,"1 sandwich"],
+ ["Chick-fil-A Nuggets 8pc",250,27,"8 pieces"],
+ ["Waffle Fries medium",420,5,"medium"],
+ ["Dave's Single (Wendy's)",590,29,"1 sandwich"],
+ ["Baconator (Wendy's)",950,58,"1 sandwich"],
+ ["Wendy's Chili small",240,17,"small"],
+ ["Crunchy Taco (Taco Bell)",170,8,"1 taco"],
+ ["Bean Burrito (Taco Bell)",350,13,"1 burrito"],
+ ["Chipotle Chicken Bowl",625,50,"1 bowl"],
+ ["Chipotle Steak Burrito",945,45,"1 burrito"],
+ ["Subway 6in Turkey",280,18,"6 inch"],
+ ["Subway 6in Steak & Cheese",380,26,"6 inch"],
+ ["Popeyes Chicken Sandwich",700,28,"1 sandwich"],
+ ["Panda Express Orange Chicken",490,25,"1 serving"],
+ ["Domino's Pepperoni Slice",210,9,"1 slice"],
+ ["Cheese Pizza Slice",285,12,"1 slice"],
+ ["Chicken Breast",165,31,"4 oz"],
+ ["Chicken Breast 8oz",330,62,"8 oz"],
+ ["Chicken Thigh",210,26,"4 oz"],
+ ["Rotisserie Chicken",190,25,"4 oz"],
+ ["Ground Beef 90/10",200,23,"4 oz"],
+ ["Ground Beef 80/20",290,19,"4 oz"],
+ ["Ground Turkey 93/7",170,22,"4 oz"],
+ ["Sirloin Steak",210,30,"4 oz"],
+ ["Ribeye Steak",310,25,"4 oz"],
+ ["Pork Chop",230,26,"4 oz"],
+ ["Bacon",90,6,"2 slices"],
+ ["Sausage Link",90,5,"1 link"],
+ ["Deli Turkey",60,11,"2 oz"],
+ ["Deli Ham",70,10,"2 oz"],
+ ["Salmon",235,25,"4 oz"],
+ ["Tilapia",130,26,"4 oz"],
+ ["Canned Tuna in water",120,26,"1 can"],
+ ["Shrimp",110,23,"4 oz"],
+ ["Hot Dog",150,5,"1 frank"],
+ ["Meatballs",230,15,"4 pieces"],
+ ["Egg",70,6,"1 large egg"],
+ ["Eggs, 2 large",140,12,"2 eggs"],
+ ["Eggs, 4 large",280,24,"4 eggs"],
+ ["Egg White",17,4,"1 white"],
+ ["Greek Yogurt plain",130,22,"1 cup"],
+ ["Greek Yogurt flavored",150,15,"1 cup"],
+ ["Regular Yogurt",150,8,"1 cup"],
+ ["Cottage Cheese",200,25,"1 cup"],
+ ["Whole Milk",150,8,"1 cup"],
+ ["2% Milk",120,8,"1 cup"],
+ ["Skim Milk",80,8,"1 cup"],
+ ["Chocolate Milk",200,8,"1 cup"],
+ ["Cheddar Cheese",115,7,"1 oz"],
+ ["Mozzarella",85,6,"1 oz"],
+ ["String Cheese",80,7,"1 stick"],
+ ["Cream Cheese",100,2,"2 tbsp"],
+ ["Butter",100,0,"1 tbsp"],
+ ["Sour Cream",60,1,"2 tbsp"],
+ ["Protein Shake",120,25,"1 scoop"],
+ ["Protein Shake, 2 scoops",240,50,"2 scoops"],
+ ["Premier Protein RTD",160,30,"1 bottle"],
+ ["Fairlife Core Power",170,26,"1 bottle"],
+ ["Protein Bar",210,20,"1 bar"],
+ ["Quest Bar",190,21,"1 bar"],
+ ["Mass Gainer Shake",650,50,"1 serving"],
+ ["Rice, white",205,4,"1 cup cooked"],
+ ["Rice, brown",215,5,"1 cup cooked"],
+ ["Pasta cooked",220,8,"1 cup"],
+ ["Oats",300,10,"1 cup dry"],
+ ["Oatmeal",150,5,"1 cup"],
+ ["Bread, white",80,3,"1 slice"],
+ ["Bread, whole wheat",80,4,"1 slice"],
+ ["Bagel",280,11,"1 bagel"],
+ ["English Muffin",130,5,"1 muffin"],
+ ["Tortilla, flour",140,4,"1 large"],
+ ["Tortilla, corn",60,2,"1 small"],
+ ["Hamburger Bun",140,5,"1 bun"],
+ ["Potato, baked medium",160,4,"1 medium"],
+ ["Sweet Potato",100,2,"1 medium"],
+ ["Mashed Potatoes",210,4,"1 cup"],
+ ["French Fries homemade",300,4,"1 cup"],
+ ["Quinoa cooked",220,8,"1 cup"],
+ ["Cereal, average",150,3,"1 cup"],
+ ["Pancakes",350,8,"3 cakes"],
+ ["Waffle, frozen",180,4,"2 waffles"],
+ ["Ramen packet",380,8,"1 packet"],
+ ["Mac & Cheese",350,11,"1 cup"],
+ ["Banana",105,1,"1 medium"],
+ ["Apple",95,0,"1 medium"],
+ ["Orange",65,1,"1 medium"],
+ ["Grapes",100,1,"1 cup"],
+ ["Strawberries",50,1,"1 cup"],
+ ["Blueberries",85,1,"1 cup"],
+ ["Mixed Berries",70,1,"1 cup"],
+ ["Watermelon",45,1,"1 cup"],
+ ["Pineapple",80,1,"1 cup"],
+ ["Mango",100,1,"1 cup"],
+ ["Broccoli",55,4,"1 cup"],
+ ["Spinach raw",7,1,"1 cup"],
+ ["Mixed Salad Greens",10,1,"2 cups"],
+ ["Carrots",50,1,"1 cup"],
+ ["Green Beans",35,2,"1 cup"],
+ ["Bell Pepper",30,1,"1 medium"],
+ ["Cucumber",16,1,"1 cup"],
+ ["Tomato",22,1,"1 medium"],
+ ["Corn",130,5,"1 cup"],
+ ["Peas",120,8,"1 cup"],
+ ["Onion",45,1,"1 medium"],
+ ["Mushrooms",20,3,"1 cup"],
+ ["Asparagus",30,3,"1 cup"],
+ ["Avocado",240,3,"1 whole"],
+ ["Avocado, half",120,2,"1/2"],
+ ["Black Beans",220,15,"1 cup"],
+ ["Pinto Beans",240,15,"1 cup"],
+ ["Chickpeas",270,15,"1 cup"],
+ ["Lentils cooked",230,18,"1 cup"],
+ ["Peanut Butter",190,8,"2 tbsp"],
+ ["Almond Butter",195,7,"2 tbsp"],
+ ["Almonds",165,6,"1 oz"],
+ ["Peanuts",160,7,"1 oz"],
+ ["Cashews",155,5,"1 oz"],
+ ["Walnuts",185,4,"1 oz"],
+ ["Mixed Nuts",170,5,"1 oz"],
+ ["Olive Oil",120,0,"1 tbsp"],
+ ["Mayonnaise",90,0,"1 tbsp"],
+ ["Ranch Dressing",130,1,"2 tbsp"],
+ ["Hummus",70,2,"2 tbsp"],
+ ["Guacamole",90,1,"2 tbsp"],
+ ["Potato Chips",150,2,"1 oz"],
+ ["Tortilla Chips",140,2,"1 oz"],
+ ["Doritos",150,2,"1 oz"],
+ ["Pretzels",110,3,"1 oz"],
+ ["Popcorn, air popped",95,3,"3 cups"],
+ ["Granola Bar",130,3,"1 bar"],
+ ["Rice Cake",35,1,"1 cake"],
+ ["Crackers",80,1,"6 crackers"],
+ ["Chocolate Chip Cookie",160,2,"1 large"],
+ ["Brownie",180,2,"1 square"],
+ ["Donut, glazed",240,3,"1 donut"],
+ ["Ice Cream",270,5,"1 cup"],
+ ["Candy Bar",250,4,"1 bar"],
+ ["Gummy Candy",140,2,"1 oz"],
+ ["Dark Chocolate",170,2,"1 oz"],
+ ["Cheesecake slice",400,7,"1 slice"],
+ ["Water",0,0,"any"],
+ ["Coffee",5,0,"1 cup black"],
+ ["Coffee w/ cream & sugar",70,1,"1 cup"],
+ ["Latte",190,10,"16 oz"],
+ ["Green Tea",0,0,"1 cup"],
+ ["Orange Juice",110,2,"1 cup"],
+ ["Apple Juice",115,0,"1 cup"],
+ ["Coca-Cola",140,0,"12 oz can"],
+ ["Diet Soda",0,0,"12 oz can"],
+ ["Gatorade",140,0,"20 oz"],
+ ["Energy Drink",160,0,"16 oz"],
+ ["Monster Zero",10,0,"16 oz"],
+ ["Beer",150,2,"12 oz"],
+ ["Light Beer",100,1,"12 oz"],
+ ["Wine",125,0,"5 oz"],
+ ["Liquor shot",100,0,"1.5 oz"],
+ ["Smoothie",250,5,"16 oz"],
+ ["Sports Drink Zero",5,0,"20 oz"],
+ ["Ketchup",20,0,"1 tbsp"],
+ ["Mustard",5,0,"1 tbsp"],
+ ["BBQ Sauce",45,0,"1 tbsp"],
+ ["Hot Sauce",1,0,"1 tsp"],
+ ["Soy Sauce",10,1,"1 tbsp"],
+ ["Honey",65,0,"1 tbsp"],
+ ["Maple Syrup",50,0,"1 tbsp"],
+ ["Sugar",16,0,"1 tsp"],
+ ["Salsa",10,0,"2 tbsp"],
+ ["Sriracha",5,0,"1 tsp"],
+ ["Chicken & Rice bowl",550,55,"1 bowl"],
+ ["Turkey Sandwich",350,25,"1 sandwich"],
+ ["PB&J Sandwich",380,13,"1 sandwich"],
+ ["Caesar Salad w/ chicken",470,35,"1 bowl"],
+ ["Burrito Bowl homemade",600,45,"1 bowl"],
+ ["Stir Fry w/ chicken",480,40,"1 plate"],
+ ["Spaghetti w/ meat sauce",550,28,"1 plate"],
+ ["Chicken Alfredo",800,40,"1 plate"],
+ ["Cheeseburger homemade",500,30,"1 burger"],
+ ["Steak & Potato plate",650,50,"1 plate"],
+ ["Omelette, 3 egg w/ cheese",400,28,"1 omelette"],
+ ["Breakfast Burrito",480,22,"1 burrito"],
+ ["Tuna Salad Sandwich",420,25,"1 sandwich"],
+ ["Chicken Caesar Wrap",520,32,"1 wrap"]
+];
 
 var FOODS=[
  ["McDonald's",[
@@ -421,9 +670,46 @@ var water=load(K.water,{});
 var tab=0,range=12,openW=null,openT=null,editing=null,saved=false,cheer=false;
 var openCat=null,addOpen=false,selDay=null;
 var ice=load('ledger.ice.v1',true);
+var q='',qServ={},recent=load('ledger.recent.v1',[]);
 var mView=(function(){var d=new Date();return {y:d.getFullYear(),m:d.getMonth()};})();
 var TABS=[['Next','bolt'],['Train','dumb'],['Food','fork'],['Month','cal'],['Weight','act'],['Tips','bulb']];
 var CRUMB=['Next session','Your rotation','Today\'s intake','Calendar','Weight trend','Everything else'];
+
+/* ---- food search ---- */
+function searchFood(query){
+  var t=query.toLowerCase().trim();
+  if(!t)return [];
+  var toks=t.split(/\s+/),out=[];
+  for(var i=0;i<FOODDB.length;i++){
+    var f=FOODDB[i],nm=f[0].toLowerCase();
+    var words=nm.split(/[\s,()\/]+/).filter(Boolean);
+    var ok=true,sc=0;
+    for(var j=0;j<toks.length;j++){
+      var tk=toks[j],best=-1;
+      for(var k=0;k<words.length;k++){
+        var w=words[k];
+        if(w===tk){best=Math.max(best,k===0?12:9);}
+        else if(w.indexOf(tk)===0){best=Math.max(best,k===0?8:6);}
+        else if(w.indexOf(tk)>0){best=Math.max(best,2);}
+      }
+      if(best<0){ok=false;break;}
+      sc+=best;
+    }
+    if(!ok)continue;
+    if(nm===t)sc+=60;
+    else if(nm.indexOf(t)===0)sc+=18;
+    /* prefer concise names: penalise every word beyond what was typed */
+    sc-=Math.max(0,words.length-toks.length)*3;
+    out.push([sc,i,f]);
+  }
+  out.sort(function(a,b){return b[0]-a[0]||a[1]-b[1];});
+  return out.slice(0,14).map(function(x){return x[2];});
+}
+function servOf(n){return qServ[n]||1;}
+function pushRecent(f){
+  recent=[f].concat(recent.filter(function(x){return x[0]!==f[0];})).slice(0,8);
+  save('ledger.recent.v1',recent);
+}
 
 /* ---- food + water helpers ---- */
 function dayFood(d){return food[d]||[];}
@@ -619,10 +905,19 @@ function vFood(){
   }
   h+='</section>';
 
+  h+='<section><div class="sec-h"><h2>Add food</h2>'
+   +'<span class="xs" style="color:var(--faint)">'+FOODDB.length+' items</span></div>'
+   +'<div class="pad pt0">'
+   +'<div class="srch"><span class="sico">'+svg(I.search,2.2)+'</span>'
+   +'<input id="q" placeholder="Search food..." value="'+esc(q)+'" autocomplete="off" '
+   +'autocorrect="off" autocapitalize="none" spellcheck="false">'
+   +(q?'<button class="clr" data-clr="1">'+svg(I.x,2.4)+'</button>':'')
+   +'</div><div id="sres">'+resultsHTML()+'</div></div></section>';
+
   h+='<section><button class="acc" data-add="1">'
    +'<span class="lft"><span class="ic" style="background:rgba(232,147,60,.13);color:var(--brass)">'+svg(I.plus)+'</span>'
-   +'<span><span style="display:block;font-weight:800;font-size:15px">Custom entry</span>'
-   +'<span class="xs" style="color:var(--faint)">Anything not in the list</span></span></span>'
+   +'<span><span style="display:block;font-weight:800;font-size:15px">Manual entry</span>'
+   +'<span class="xs" style="color:var(--faint)">If it is not in the list</span></span></span>'
    +'<span class="chev'+(addOpen?' open':'')+'">'+svg(I.chev)+'</span></button>';
   if(addOpen){
     h+='<div class="pad" style="border-top:1px solid var(--line)">'
@@ -657,6 +952,34 @@ function vFood(){
   h+='<div class="r xs" style="color:var(--faint);padding:4px 4px 0">'
    +'Resets each day. History lives in the Month tab.</div>';
   return h;
+}
+
+function foodCard(f,tagTxt){
+  var n=f[0],sv=servOf(n),cal=Math.round(f[1]*sv),pro=Math.round(f[2]*sv);
+  var enc=encodeURIComponent(n);
+  return '<div class="fres">'
+   +'<div class="fr-top"><span class="fr-n">'+esc(n)+'</span>'
+   +(tagTxt?'<span class="tagr">'+tagTxt+'</span>':'')+'</div>'
+   +'<div class="fr-bot">'
+   +'<span class="fr-m num">'+cal+' kcal · '+pro+'g · '+(sv===1?f[3]:sv+' × '+f[3])+'</span>'
+   +'<span class="fr-act">'
+   +'<button class="sv" data-serv="'+enc+'" data-d="-1">−</button>'
+   +'<span class="svn num">'+(sv%1?sv.toFixed(1):sv)+'</span>'
+   +'<button class="sv" data-serv="'+enc+'" data-d="1">+</button>'
+   +'<button class="fadd" data-pick="'+enc+'">'+svg(I.plus,2.8)+'</button>'
+   +'</span></div></div>';
+}
+function resultsHTML(){
+  if(!q){
+    if(!recent.length)return '<p class="xs" style="color:var(--faint);margin-top:10px;line-height:1.5">'
+      +'Type a food name and the calories and protein fill in automatically. Adjust servings with − / + before adding.</p>';
+    return '<div class="reclist"><span class="xs" style="color:var(--faint);font-weight:700;display:block;margin:12px 0 2px">RECENT</span>'
+      + recent.map(function(f){return foodCard(f,'');}).join('')+'</div>';
+  }
+  var r=searchFood(q);
+  if(!r.length)return '<p class="xs" style="color:var(--faint);margin-top:12px;line-height:1.5">'
+    +'No match. Use Manual entry below and it will still count toward today.</p>';
+  return '<div class="reclist">'+r.map(function(f){return foodCard(f,'');}).join('')+'</div>';
 }
 
 /* ============ CALENDAR ============ */
@@ -851,6 +1174,10 @@ function chart(){
 
 /* ============ RENDER ============ */
 var view=document.getElementById('view'),nav=document.getElementById('nav'),crumb=document.getElementById('crumb');
+function paintResults(){var box=document.getElementById('sres');if(box)box.innerHTML=resultsHTML();}
+document.addEventListener('input',function(e){
+  if(e.target&&e.target.id==='q'){q=e.target.value;qServ={};paintResults();}
+});
 function render(){
   view.innerHTML=[vNext,vTrain,vFood,vMonth,vWeight,vTips][tab]();
   crumb.innerHTML=CRUMB[tab];
@@ -862,7 +1189,7 @@ function render(){
 
 /* ============ EVENTS ============ */
 document.addEventListener('click',function(ev){
-  var t=ev.target.closest('[data-tab],[data-act],[data-w],[data-t],[data-tier],[data-range],[data-water],[data-ice],[data-del],[data-q],[data-cat],[data-add],[data-day],[data-mo],#add,#finish,#skip,#fadd');
+  var t=ev.target.closest('[data-tab],[data-act],[data-w],[data-t],[data-tier],[data-range],[data-water],[data-ice],[data-pick],[data-serv],[data-clr],[data-del],[data-q],[data-cat],[data-add],[data-day],[data-mo],#add,#finish,#skip,#fadd');
   if(!t)return;
   if(t.id==='finish'){buzz(15);
     sessions=sessions.concat([{date:iso(),key:cur().key,tier:tierO().label}]);save(K.ses,sessions);
@@ -879,6 +1206,23 @@ document.addEventListener('click',function(ev){
     log=log.filter(function(e){return e.date!==dE.value;}).concat([{date:dE.value,weight:v}]);
     save(K.log,log);saved=true;render();
     setTimeout(function(){saved=false;if(tab===4)render();},1600);return;}
+  if(t.dataset.pick!==undefined){buzz(12);
+    var pn=decodeURIComponent(t.dataset.pick),pf=null;
+    for(var pi=0;pi<FOODDB.length;pi++)if(FOODDB[pi][0]===pn){pf=FOODDB[pi];break;}
+    if(!pf)for(var ri=0;ri<recent.length;ri++)if(recent[ri][0]===pn){pf=recent[ri];break;}
+    if(!pf)return;
+    var mult=servOf(pn);
+    addFood(mult===1?pf[0]:pf[0]+' x'+(mult%1?mult.toFixed(1):mult),
+            Math.round(pf[1]*mult),Math.round(pf[2]*mult));
+    pushRecent(pf);delete qServ[pn];render();return;}
+  if(t.dataset.serv!==undefined){buzz();
+    var sn=decodeURIComponent(t.dataset.serv),dd=parseFloat(t.dataset.d);
+    var cvv=servOf(sn);
+    var nv=dd>0?(cvv<1?cvv+0.5:cvv+1):(cvv<=1?cvv-0.5:cvv-1);
+    nv=Math.round(Math.max(0.5,Math.min(10,nv))*10)/10;
+    qServ[sn]=nv;paintResults();return;}
+  if(t.dataset.clr!==undefined){buzz();q='';qServ={};render();
+    var qb=document.getElementById('q');if(qb)qb.focus();return;}
   if(t.dataset.ice!==undefined){buzz();ice=!ice;save('ledger.ice.v1',ice);render();return;}
   if(t.dataset.water!==undefined){buzz();addWater(parseInt(t.dataset.water,10));render();return;}
   if(t.dataset.del!==undefined){buzz(12);delFood(parseInt(t.dataset.del,10));render();return;}
