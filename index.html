@@ -359,7 +359,8 @@ var TIPS=[
   ["Protein is the number to watch","If calories run a little over or under on a given day it evens out. Missing protein repeatedly is what actually costs you muscle in a recomp."],
   ["Water","95oz is the target, more on lifting days. Since you are at McDonald's five days a week, the cup buttons match the US sizes exactly — Kids 12, Small 16, Medium 21, Large 30. Leave the ice toggle on and they count actual liquid rather than cup volume, which is roughly 30% less."],
   ["The calendar is the honest view","Dots show workouts, food, and water goal per day. A month with gaps isn't a failure — it's information. Look for whether the gaps cluster around long shifts, and plan Minimum sessions for those stretches."],
-  ["Don't let tracking become the goal","The point is noticing patterns, not perfect data. A day you forgot to log is not a day wasted."]
+  ["Don't let tracking become the goal","The point is noticing patterns, not perfect data. A day you forgot to log is not a day wasted."],
+  ["Before deleting the app icon","iOS stores this app's data inside the home-screen icon itself. Deleting the icon deletes everything. Export a backup from the bottom of this tab first, re-add the icon, then Restore. Regular website updates never touch your data."]
  ]},
  {id:"consist",title:"Consistency",sub:"The part that actually decides this",icon:"clock",color:"#e8933c",items:[
   ["A short session beats a skipped one","Three exercises twice a week beats zero. The point of Minimum isn't the workout — it's keeping the habit intact so a bad week doesn't turn into two months off."],
@@ -2694,6 +2695,22 @@ var SEED=[
 var K={log:'ledger.log.v2',cyc:'ledger.cycle.v1',ses:'ledger.sessions.v1',
         chk:'ledger.check.v1',wt:'ledger.weights.v1',
         food:'ledger.food.v1',water:'ledger.water.v1'};
+var BK_KEYS=[K.log,K.cyc,K.ses,K.chk,K.wt,K.food,K.water,'ledger.ice.v1','ledger.recent.v1'];
+function exportData(){
+  var out={app:'emberkeep',v:1,date:iso(),data:{}};
+  BK_KEYS.forEach(function(k){try{var v=localStorage.getItem(k);if(v!==null)out.data[k]=v;}catch(e){}});
+  return JSON.stringify(out);
+}
+function importData(txt){
+  var obj;
+  try{obj=JSON.parse(txt);}catch(e){return 'That does not look like a backup \u2014 paste the whole text exactly.';}
+  if(!obj||obj.app!=='emberkeep'||!obj.data)return 'Not an Emberkeep backup.';
+  var n=0;
+  Object.keys(obj.data).forEach(function(k){
+    if(k.indexOf('ledger.')===0){try{localStorage.setItem(k,obj.data[k]);n++;}catch(e){}}
+  });
+  return n?('Restored '+n+' data sets from '+(obj.date||'backup')+'.'):'Backup was empty.';
+}
 function load(k,fb){try{var v=localStorage.getItem(k);return v?JSON.parse(v):fb;}catch(e){return fb;}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){return false;}}
 function iso(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -2709,6 +2726,7 @@ var chk=load(K.chk,{date:'',key:'',items:{}});
 var food=load(K.food,{});
 var water=load(K.water,{});
 var tab=0,range=12,openW=null,openT=null,editing=null,saved=false,cheer=false;
+var bkMsg='',bkMode=null;
 var openCat=null,addOpen=false,selDay=null;
 var ice=load('ledger.ice.v1',true);
 var q='',qServ={},recent=load('ledger.recent.v1',[]);
@@ -3188,6 +3206,23 @@ function vWeight(){
 
 /* ============ TIPS ============ */
 function vTips(){
+  var bk='<section><div class="sec-h"><h2>Backup &amp; Restore</h2></div>'
+   +'<div class="pad pt0">'
+   +'<p class="s" style="color:var(--dim);line-height:1.55;margin-bottom:12px">'
+   +'Your data lives on this device only. <b style="color:var(--text)">Deleting the home-screen icon deletes all of it</b> \u2014 '
+   +'so export first, re-add the icon, then restore. Updating the website itself never wipes anything.</p>'
+   +'<div style="display:flex;gap:8px">'
+   +'<button class="btn" id="bkExport" style="flex:1;background:rgba(232,147,60,.14);color:var(--brass)">Export</button>'
+   +'<button class="btn" id="bkImportOpen" style="flex:1">Restore</button>'
+   +'</div>'
+   +(bkMode?'<textarea id="bk" '+(bkMode==='export'?'readonly':'')+' placeholder="Paste your backup text here" '
+     +'style="width:100%;margin-top:10px;min-height:110px;border-radius:11px;background:var(--card2);'
+     +'border:1px solid var(--line);color:var(--text);font-size:12px;padding:10px;'
+     +'font-family:ui-monospace,Menlo,monospace">'+(bkMode==='export'?esc(exportData()):'')+'</textarea>'
+     +(bkMode==='import'?'<button class="btn go" id="bkImport" style="margin-top:8px">Restore from pasted text</button>':'')
+     :'')
+   +(bkMsg?'<p class="s" style="color:var(--pine);margin-top:10px">'+esc(bkMsg)+'</p>':'')
+   +'</div></section>';
   return TIPS.map(function(g){
     var open=openT===g.id;
     var s='<section><button class="acc" data-t="'+g.id+'">'
@@ -3203,7 +3238,7 @@ function vTips(){
        +'</div>';
     }
     return s+'</section>';
-  }).join('');
+  }).join('')+bk;
 }
 
 /* ============ CHART ============ */
@@ -3279,7 +3314,7 @@ function render(){
 
 /* ============ EVENTS ============ */
 document.addEventListener('click',function(ev){
-  var t=ev.target.closest('[data-tab],[data-act],[data-w],[data-t],[data-tier],[data-range],[data-water],[data-ice],[data-pick],[data-serv],[data-clr],[data-del],[data-q],[data-cat],[data-add],[data-day],[data-mo],[data-today],[data-logday],#add,#finish,#skip,#fadd');
+  var t=ev.target.closest('[data-tab],[data-act],[data-w],[data-t],[data-tier],[data-range],[data-water],[data-ice],[data-pick],[data-serv],[data-clr],[data-del],[data-q],[data-cat],[data-add],[data-day],[data-mo],[data-today],[data-logday],#bkExport,#bkImportOpen,#bkImport,#add,#finish,#skip,#fadd');
   if(!t)return;
   if(t.id==='finish'){buzz(15);
     sessions=sessions.concat([{date:iso(),key:cur().key,tier:tierO().label}]);save(K.ses,sessions);
@@ -3331,6 +3366,25 @@ document.addEventListener('click',function(ev){
     var cbv=cbEl?parseInt(cbEl.value,10):NaN,ftv=ftEl?parseInt(ftEl.value,10):NaN;
     if(!nm||isNaN(cv))return;
     buzz(12);addFood(nm,cv,isNaN(pv)?0:pv,isNaN(cbv)?0:cbv,isNaN(ftv)?0:ftv);addOpen=false;render();return;}
+  if(t.id==='bkExport'){buzz();bkMode='export';bkMsg='';render();
+    var ta=document.getElementById('bk');
+    if(ta){ta.focus();try{ta.select();}catch(e){}
+      try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value);bkMsg='Copied to clipboard \u2014 save it somewhere safe (Notes works).';render();}}catch(e){}}
+    return;}
+  if(t.id==='bkImportOpen'){buzz();bkMode='import';bkMsg='';render();
+    var ta2=document.getElementById('bk');if(ta2)ta2.focus();return;}
+  if(t.id==='bkImport'){buzz(12);
+    var ta3=document.getElementById('bk');
+    bkMsg=importData(ta3?ta3.value:'');
+    if(bkMsg.indexOf('Restored')===0){
+      bkMode=null;
+      log=load(K.log,null)||SEED.slice();cyc=load(K.cyc,{i:0,tier:'short'});
+      sessions=load(K.ses,[]);weights=load(K.wt,{});food=load(K.food,{});water=load(K.water,{});
+      recent=load('ledger.recent.v1',[]);ice=load('ledger.ice.v1',true);
+      chk=load(K.chk,{date:'',key:'',items:{}});
+      if(chk.date!==iso()||chk.key!==CYCLE[cyc.i].key)chk={date:iso(),key:CYCLE[cyc.i].key,items:{}};
+    }
+    render();return;}
   if(t.dataset.today!==undefined){buzz();logDate=iso();render();return;}
   if(t.dataset.logday!==undefined){buzz();
     logDate=t.dataset.logday;tab=2;window.scrollTo(0,0);render();return;}
