@@ -299,7 +299,7 @@ function svg(p,w){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentCo
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 /* ============ DATA ============ */
-var CYCLE=[
+var CYCLE_DEFAULT=[
  {key:"A",name:"Push",focus:"Chest · Shoulders · Triceps",color:"#f4b73f",ex:[
    ["Incline DB Press","40",4,"6-10"],["DB Shoulder Press","35",3,"8-12"],
    ["Overhead Tricep Extension","new",3,"10-15"],
@@ -2752,8 +2752,8 @@ var SEED=[
 /* ============ STORAGE ============ */
 var K={log:'ledger.log.v2',cyc:'ledger.cycle.v1',ses:'ledger.sessions.v1',
         chk:'ledger.check.v1',wt:'ledger.weights.v1',
-        food:'ledger.food.v1',water:'ledger.water.v1'};
-var BK_KEYS=[K.log,K.cyc,K.ses,K.chk,K.wt,K.food,K.water,'ledger.ice.v1','ledger.recent.v1'];
+        food:'ledger.food.v1',water:'ledger.water.v1',plan:'ledger.plan.v1'};
+var BK_KEYS=[K.log,K.cyc,K.ses,K.chk,K.wt,K.food,K.water,K.plan,'ledger.ice.v1','ledger.recent.v1'];
 function exportData(){
   var out={app:'emberkeep',v:1,date:iso(),data:{}};
   BK_KEYS.forEach(function(k){try{var v=localStorage.getItem(k);if(v!==null)out.data[k]=v;}catch(e){}});
@@ -2785,6 +2785,7 @@ var food=load(K.food,{});
 var water=load(K.water,{});
 var tab=0,range=12,openW=null,openT=null,editing=null,saved=false,cheer=false;
 var bkMsg='',bkMode=null;
+var edW=null,edReset=null;
 var openCat=null,addOpen=false,selDay=null;
 var ice=load('ledger.ice.v1',true);
 var q='',qServ={},recent=load('ledger.recent.v1',[]);
@@ -2859,6 +2860,16 @@ function delFood(i){var d=logDate,a=dayFood(d).slice();a.splice(i,1);
 function addWater(oz){var d=logDate;water[d]=Math.max(0,dayWater(d)+oz);
   if(water[d]===0)delete water[d];save(K.water,water);}
 function sessionOn(d){for(var i=0;i<sessions.length;i++)if(sessions[i].date===d)return sessions[i];return null;}
+var CYCLE=(function(){
+  var sv=load(K.plan,null);
+  if(sv&&sv.length===3&&sv.every(function(w){return w&&w.ex&&w.ex.length;}))return sv;
+  return JSON.parse(JSON.stringify(CYCLE_DEFAULT));
+})();
+function savePlan(){save(K.plan,CYCLE);}
+function planChanged(k){
+  savePlan();
+  if(chk.key===k)chk={date:iso(),key:k,items:{}};
+}
 function cycByKey(k){for(var i=0;i<CYCLE.length;i++)if(CYCLE[i].key===k)return CYCLE[i];return CYCLE[0];}
 
 function cur(){return CYCLE[cyc.i];}
@@ -2953,23 +2964,67 @@ function wEditor(id,v,color){
 
 /* ============ TRAIN ============ */
 function vTrain(){
-  return CYCLE.map(function(w){
-    var open=openW===w.key;
+  return CYCLE.map(function(w,wi){
+    var open=openW===w.key, ed=edW===w.key;
     var s='<section><button class="acc" data-w="'+w.key+'">'
      +'<span class="lft"><span class="ic" style="background:'+w.color+'1c;color:'+w.color+'">'+svg(I.dumb)+'</span>'
-     +'<span><span style="display:block;font-weight:800;font-size:15px">'+w.key+' · '+w.name+'</span>'
-     +'<span class="xs" style="color:var(--faint)">'+w.focus+'</span></span></span>'
+     +'<span><span style="display:block;font-weight:800;font-size:15px">'+w.key+' · '+esc(w.name)+'</span>'
+     +'<span class="xs" style="color:var(--faint)">'+esc(w.focus)+'</span></span></span>'
      +'<span class="chev'+(open?' open':'')+'">'+svg(I.chev)+'</span></button>';
     if(open){
+      s+='<div style="padding:0 16px 10px;display:flex;gap:8px">'
+       +'<button class="tagr" data-edw="'+w.key+'" style="min-height:34px;padding:0 12px;display:flex;align-items:center;'
+       +(ed?'background:rgba(232,147,60,.16);color:var(--brass);font-weight:700':'')+'">'
+       +(ed?'Done editing':'Edit workout')+'</button>'
+       +(ed?'<button class="tagr" data-exreset="'+w.key+'" style="min-height:34px;padding:0 12px;display:flex;align-items:center;'
+         +(edReset===w.key?'background:rgba(194,71,43,.2);color:#e0783a;font-weight:700':'color:var(--faint)')+'">'
+         +(edReset===w.key?'Tap again to confirm':'Reset to default')+'</button>':'')
+       +'</div>';
+
       s+='<div class="divide" style="border-top:1px solid var(--line)">';
+
+      if(ed){
+        s+='<div style="padding:12px 16px 4px">'
+         +'<label class="xs" style="color:var(--faint);font-weight:700;letter-spacing:.08em;text-transform:uppercase">Workout name</label>'
+         +'<input class="fin" data-wname="'+w.key+'" value="'+esc(w.name)+'" style="width:100%;margin-top:6px">'
+         +'</div>';
+      }
+
       w.ex.forEach(function(e,i){
-        var lab=i<3?'min':i<5?'short':'full',wv=getW(w.key,e);
-        s+='<div class="r"><span class="l">'+esc(e[0])
-          +'<span class="m num" style="display:block;font-size:11.5px;color:var(--faint);margin-top:1px">'
-          +e[2]+' × '+e[3]+' · '+lab+'</span></span>'
-          +'<span class="v num" style="font-weight:700;color:'+(wv===null?'var(--faint)':'var(--text)')+'">'
-          +(wv===null?'—':wv+' lb')+'</span></div>';
+        var lab=i<3?'min':i<5?'short':'full', wv=getW(w.key,e);
+        if(!ed){
+          s+='<div class="r"><span class="l">'+esc(e[0])
+            +'<span class="m num" style="display:block;font-size:11.5px;color:var(--faint);margin-top:1px">'
+            +e[2]+' × '+esc(e[3])+' · '+lab+'</span></span>'
+            +'<span class="v num" style="font-weight:700;color:'+(wv===null?'var(--faint)':'var(--text)')+'">'
+            +(wv===null?'—':wv+' lb')+'</span></div>';
+        }else{
+          s+='<div style="padding:10px 16px;border-top:1px solid var(--line)">'
+           +'<div style="display:flex;gap:8px;align-items:center">'
+           +'<span class="xs num" style="color:var(--faint);flex:0 0 18px">'+(i+1)+'</span>'
+           +'<input class="fin" data-exn="'+w.key+'|'+i+'" value="'+esc(e[0])+'" style="flex:1">'
+           +'<button class="tagr" data-exdel="'+w.key+'|'+i+'" style="flex:0 0 auto;min-width:36px;min-height:38px;'
+           +'display:flex;align-items:center;justify-content:center;color:#e0783a">'+svg(I.x,2.2)+'</button>'
+           +'</div>'
+           +'<div style="display:flex;gap:8px;align-items:center;margin-top:7px;padding-left:26px">'
+           +'<span class="xs" style="color:var(--faint)">sets</span>'
+           +'<input class="fin num" data-exs="'+w.key+'|'+i+'" type="number" inputmode="numeric" min="1" max="10" value="'+e[2]+'" style="width:56px;text-align:center">'
+           +'<span class="xs" style="color:var(--faint)">reps</span>'
+           +'<input class="fin num" data-exr="'+w.key+'|'+i+'" value="'+esc(e[3])+'" style="width:74px;text-align:center">'
+           +'<span style="flex:1"></span>'
+           +'<button class="tagr" data-exmv="'+w.key+'|'+i+'|-1" style="min-width:34px;min-height:34px;display:flex;align-items:center;justify-content:center'+(i===0?';opacity:.3':'')+'">↑</button>'
+           +'<button class="tagr" data-exmv="'+w.key+'|'+i+'|1" style="min-width:34px;min-height:34px;display:flex;align-items:center;justify-content:center'+(i===w.ex.length-1?';opacity:.3':'')+'">↓</button>'
+           +'</div></div>';
+        }
       });
+
+      if(ed){
+        s+='<div style="padding:12px 16px 14px;border-top:1px solid var(--line)">'
+         +'<button class="btn ghost" data-exadd="'+w.key+'">+ Add exercise</button>'
+         +'<p class="xs" style="color:var(--faint);margin-top:10px;line-height:1.5">'
+         +'Order is priority order — drag the important lifts up. Minimum takes the first three, Short the first five. '
+         +'Changing this workout clears today\'s check marks for it.</p></div>';
+      }
       s+='</div>';
     }
     return s+'</section>';
@@ -3356,7 +3411,31 @@ document.addEventListener('input',function(e){
     var xb=document.querySelector('.clr');if(xb)xb.style.display=q?'flex':'none';}
 });
 document.addEventListener('change',function(e){
-  if(e.target&&e.target.id==='ld'){
+  var el=e.target;if(!el)return;
+  if(el.dataset&&el.dataset.exn!==undefined){
+    var p=el.dataset.exn.split('|'),w=cycByKey(p[0]),i=parseInt(p[1],10);
+    var nv=(el.value||'').trim();if(!nv){render();return;}
+    var oldName=w.ex[i][0];
+    if(nv!==oldName){
+      var ok=wid(w.key,w.ex[i]);
+      if(weights[ok]!==undefined){weights[wid(w.key,[nv])]=weights[ok];delete weights[ok];save(K.wt,weights);}
+      w.ex[i][0]=nv;planChanged(w.key);render();
+    }
+    return;}
+  if(el.dataset&&el.dataset.exs!==undefined){
+    var ps=el.dataset.exs.split('|'),ws=cycByKey(ps[0]),is=parseInt(ps[1],10);
+    var sv=parseInt(el.value,10);
+    if(isNaN(sv)||sv<1)sv=1;if(sv>10)sv=10;
+    ws.ex[is][2]=sv;planChanged(ws.key);render();return;}
+  if(el.dataset&&el.dataset.exr!==undefined){
+    var pr=el.dataset.exr.split('|'),wr=cycByKey(pr[0]),ir=parseInt(pr[1],10);
+    var rv=(el.value||'').trim();if(!rv)rv='8-12';
+    wr.ex[ir][3]=rv;planChanged(wr.key);render();return;}
+  if(el.dataset&&el.dataset.wname!==undefined){
+    var wn=cycByKey(el.dataset.wname),nn=(el.value||'').trim();
+    if(nn){wn.name=nn;savePlan();}
+    render();return;}
+  if(el.id==='ld'){
     var v=e.target.value;
     if(v){ logDate=v>iso()?iso():v; render(); }
   }
@@ -3372,7 +3451,7 @@ function render(){
 
 /* ============ EVENTS ============ */
 document.addEventListener('click',function(ev){
-  var t=ev.target.closest('[data-tab],[data-act],[data-w],[data-t],[data-tier],[data-range],[data-water],[data-ice],[data-pick],[data-serv],[data-clr],[data-del],[data-q],[data-cat],[data-add],[data-day],[data-mo],[data-today],[data-logday],#bkExport,#bkImportOpen,#bkImport,#add,#finish,#skip,#fadd');
+  var t=ev.target.closest('[data-tab],[data-act],[data-w],[data-t],[data-tier],[data-range],[data-water],[data-ice],[data-pick],[data-serv],[data-clr],[data-del],[data-q],[data-cat],[data-add],[data-day],[data-mo],[data-today],[data-logday],#bkExport,#bkImportOpen,#bkImport,[data-edw],[data-exdel],[data-exmv],[data-exadd],[data-exreset],#add,#finish,#skip,#fadd');
   if(!t)return;
   if(t.id==='finish'){buzz(15);
     sessions=sessions.concat([{date:iso(),key:cur().key,tier:tierO().label}]);save(K.ses,sessions);
@@ -3424,6 +3503,33 @@ document.addEventListener('click',function(ev){
     var cbv=cbEl?parseInt(cbEl.value,10):NaN,ftv=ftEl?parseInt(ftEl.value,10):NaN;
     if(!nm||isNaN(cv))return;
     buzz(12);addFood(nm,cv,isNaN(pv)?0:pv,isNaN(cbv)?0:cbv,isNaN(ftv)?0:ftv);addOpen=false;render();return;}
+  if(t.dataset.edw!==undefined){buzz();
+    edW=(edW===t.dataset.edw?null:t.dataset.edw);edReset=null;render();return;}
+  if(t.dataset.exdel!==undefined){buzz(12);
+    var dp=t.dataset.exdel.split('|'),dw=cycByKey(dp[0]),di=parseInt(dp[1],10);
+    if(dw.ex.length<=1){return;}
+    dw.ex.splice(di,1);planChanged(dw.key);render();return;}
+  if(t.dataset.exmv!==undefined){buzz();
+    var mp=t.dataset.exmv.split('|'),mw=cycByKey(mp[0]),mi=parseInt(mp[1],10),md=parseInt(mp[2],10);
+    var mj=mi+md;
+    if(mj<0||mj>=mw.ex.length)return;
+    var tmp=mw.ex[mi];mw.ex[mi]=mw.ex[mj];mw.ex[mj]=tmp;
+    planChanged(mw.key);render();return;}
+  if(t.dataset.exadd!==undefined){buzz(12);
+    var aw=cycByKey(t.dataset.exadd);
+    aw.ex.push(['New exercise','new',3,'8-12']);
+    planChanged(aw.key);render();
+    var inputs=document.querySelectorAll('[data-exn]');
+    var last=inputs[inputs.length-1];
+    if(last){last.focus();try{last.select();}catch(e){}}
+    return;}
+  if(t.dataset.exreset!==undefined){buzz();
+    var rk=t.dataset.exreset;
+    if(edReset!==rk){edReset=rk;render();return;}
+    var def=CYCLE_DEFAULT.filter(function(x){return x.key===rk;})[0];
+    var idx=CYCLE.map(function(x){return x.key;}).indexOf(rk);
+    if(def&&idx>-1)CYCLE[idx]=JSON.parse(JSON.stringify(def));
+    edReset=null;planChanged(rk);render();return;}
   if(t.id==='bkExport'){buzz();bkMode='export';bkMsg='';render();
     var ta=document.getElementById('bk');
     if(ta){ta.focus();try{ta.select();}catch(e){}
@@ -3439,6 +3545,7 @@ document.addEventListener('click',function(ev){
       log=load(K.log,null)||SEED.slice();cyc=load(K.cyc,{i:0,tier:'short'});
       sessions=load(K.ses,[]);weights=load(K.wt,{});food=load(K.food,{});water=load(K.water,{});
       recent=load('ledger.recent.v1',[]);ice=load('ledger.ice.v1',true);
+      var pl=load(K.plan,null);if(pl&&pl.length===3)CYCLE=pl;
       chk=load(K.chk,{date:'',key:'',items:{}});
       if(chk.date!==iso()||chk.key!==CYCLE[cyc.i].key)chk={date:iso(),key:CYCLE[cyc.i].key,items:{}};
     }
