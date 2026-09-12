@@ -300,24 +300,50 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 
 /* ============ DATA ============ */
 var CYCLE_DEFAULT=[
- {key:"A",name:"Push",focus:"Chest · Shoulders · Triceps",color:"#f4b73f",ex:[
-   ["Incline DB Press","40",4,"6-10"],["DB Shoulder Press","35",3,"8-12"],
-   ["Overhead Tricep Extension","new",3,"10-15"],
-   ["Flat DB Press","40",3,"8-12"],["Cable Lateral Raises","10",3,"12-20"],
-   ["Incline Cable Fly","new",3,"10-15"],["Dips","100",3,"8-12"],
-   ["Close-Grip Bench Press","new",3,"8-12"]]},
- {key:"B",name:"Pull",focus:"Back · Biceps",color:"#e0783a",ex:[
-   ["Lat Pulldown","90",4,"8-12"],["Cable Row","60",3,"8-12"],
-   ["Preacher Curls","85",3,"8-12"],
-   ["Row","60",3,"8-12"],["Incline DB Curls","new",3,"10-15"],
-   ["Rear Delt Cable Fly","15",3,"15-20"],["Hammer Curls","new",3,"10-15"],
-   ["Straight-Arm Pulldown","new",3,"12-15"]]},
- {key:"C",name:"Chest & Arms",focus:"Chest · Biceps · Triceps",color:"#c2472b",ex:[
-   ["Cable Chest Press","19",4,"8-12"],["Skull Crushers","new",3,"8-12"],
+ {key:"A",name:"Push",focus:"Chest \u00b7 Shoulders \u00b7 Triceps",color:"#f4b73f",ex:[
+   ["Incline Dumbbell Press","40",4,"6-10"],["Machine Shoulder Press","new",3,"8-12"],
+   ["Cable Overhead Tricep Ext","new",3,"10-15"],
+   ["Chest Press Machine","new",3,"8-12"],["Cable Lateral Raises","10",3,"12-20"],
+   ["Cable Incline Fly","new",3,"10-15"],["Assisted Dip Machine","new",3,"8-12"],
+   ["Cable External Rotation","new",2,"12-15 each side"],
+   ["Dead Hang","body",2,"20-45 sec"]]},
+ {key:"B",name:"Pull",focus:"Back \u00b7 Biceps",color:"#e0783a",ex:[
+   ["Lat Pulldown","90",4,"8-12"],["Seated Cable Row","60",3,"8-12"],
+   ["Face Pull","new",3,"15-20"],
+   ["Machine Row","60",3,"8-12"],["Reverse Pec Deck","15",3,"15-20"],
+   ["Preacher Curl Machine","85",3,"8-12"],["Incline Dumbbell Curls","new",3,"10-15"],
+   ["Hammer Curls","new",3,"10-15"],["Straight-Arm Pulldown","new",3,"12-15"],
+   ["Cable Y-Raise (Lower Trap)","new",3,"12-15"],
+   ["Dead Hang","body",2,"20-45 sec"]]},
+ {key:"C",name:"Chest & Arms",focus:"Chest \u00b7 Biceps \u00b7 Triceps",color:"#c2472b",ex:[
+   ["Cable Chest Press","19",4,"8-12"],["Dumbbell Skull Crushers","new",3,"8-12"],
    ["Spider Curls","50",3,"10-15"],
-   ["Pectoral Fly","70",3,"10-15"],["JM Press","20",3,"8-12"],
+   ["Pec Deck","70",3,"10-15"],["Cable Rope Pushdown","20",3,"10-15"],
    ["Low-to-High Crossover","new",3,"12-15"],["Reverse Cable Curls","20",2,"12-15"],
-   ["African Curls","20",2,"12-15"]]}
+   ["African Curls","20",2,"12-15"],
+   ["Dead Hang","body",2,"20-45 sec"]]},
+ {key:"D",name:"Legs",focus:"Quads \u00b7 Hamstrings \u00b7 Calves",color:"#7a9e6e",ex:[
+   ["Leg Press","new",4,"8-12"],["Seated Leg Curl","new",3,"10-15"],
+   ["Leg Extension","new",3,"12-15"],
+   ["Smith Machine RDL","new",3,"8-12"],["Calf Raise (Leg Press)","new",4,"12-20"],
+   ["Hip Abduction Machine","new",3,"15-20"],["Goblet Squat","new",3,"10-15"],
+   ["Smith Machine Hip Thrust","new",3,"10-12"],
+   ["Dead Hang","body",2,"20-45 sec"]]},
+ {key:"E",name:"Core & Mobility",focus:"Home \u00b7 spinal stability \u00b7 non-gym day",color:"#93aeb8",ex:[
+   ["Dead Bug","body",3,"8-10 each side"],["Side Plank","body",3,"20-40 sec each"],
+   ["Bird Dog","body",3,"8-10 each side"],
+   ["Glute Bridge","body",3,"12-15"],["Pallof Press (band)","new",3,"10-12 each side"],
+   ["Wall Angels","body",2,"8-10 slow"],["Chin Tucks","body",2,"10 x 3 sec hold"],
+   ["Prone Y-T-W Raise","body",2,"8-10 each"],
+   ["Cobra / Prone Press-Up","body",2,"8-10 slow"],
+   ["Constructive Rest","body",1,"5-10 min"],
+   ["Cat-Cow","body",2,"8-10 slow"],["Child's Pose","body",3,"30-45 sec"],
+   ["Kneeling Hip Flexor Stretch","body",2,"30-45 sec each"],
+   ["Supine Hamstring Stretch","body",2,"30-45 sec each"],
+   ["Figure-4 Glute Stretch","body",2,"30-45 sec each"],
+   ["Open-Book Thoracic Rotation","body",2,"8-10 each side"],
+   ["Doorway Chest Stretch","body",2,"30-45 sec"],
+   ["Dead Hang","body",2,"20-45 sec"]]}
 ];
 var TIERS=[
  {id:"min",label:"Minimum",n:3,time:"~20 min"},
@@ -2752,8 +2778,8 @@ var SEED=[
 /* ============ STORAGE ============ */
 var K={log:'ledger.log.v2',cyc:'ledger.cycle.v1',ses:'ledger.sessions.v1',
         chk:'ledger.check.v1',wt:'ledger.weights.v1',
-        food:'ledger.food.v1',water:'ledger.water.v1',plan:'ledger.plan.v1'};
-var BK_KEYS=[K.log,K.cyc,K.ses,K.chk,K.wt,K.food,K.water,K.plan,'ledger.ice.v1','ledger.recent.v1'];
+        food:'ledger.food.v1',water:'ledger.water.v1',plan:'ledger.plan.v2'};
+var BK_KEYS=[K.log,K.cyc,K.ses,K.chk,K.wt,K.food,K.water,K.plan,'ledger.plan.v1','ledger.ice.v1','ledger.recent.v1'];
 function exportData(){
   var out={app:'emberkeep',v:1,date:iso(),data:{}};
   BK_KEYS.forEach(function(k){try{var v=localStorage.getItem(k);if(v!==null)out.data[k]=v;}catch(e){}});
@@ -2862,8 +2888,13 @@ function addWater(oz){var d=logDate;water[d]=Math.max(0,dayWater(d)+oz);
 function sessionOn(d){for(var i=0;i<sessions.length;i++)if(sessions[i].date===d)return sessions[i];return null;}
 var CYCLE=(function(){
   var sv=load(K.plan,null);
-  if(sv&&sv.length===3&&sv.every(function(w){return w&&w.ex&&w.ex.length;}))return sv;
-  return JSON.parse(JSON.stringify(CYCLE_DEFAULT));
+  if(!(sv&&sv.length&&sv.every(function(w){return w&&w.key&&w.ex&&w.ex.length;})))
+    return JSON.parse(JSON.stringify(CYCLE_DEFAULT));
+  var have={};sv.forEach(function(w){have[w.key]=1;});
+  CYCLE_DEFAULT.forEach(function(d){
+    if(!have[d.key])sv.push(JSON.parse(JSON.stringify(d)));
+  });
+  return sv;
 })();
 function savePlan(){save(K.plan,CYCLE);}
 function planChanged(k){
@@ -2872,15 +2903,19 @@ function planChanged(k){
 }
 function cycByKey(k){for(var i=0;i<CYCLE.length;i++)if(CYCLE[i].key===k)return CYCLE[i];return CYCLE[0];}
 
-function cur(){return CYCLE[cyc.i];}
+function cur(){if(cyc.i>=CYCLE.length||cyc.i<0)cyc.i=0;return CYCLE[cyc.i];}
 if(chk.date!==iso()||chk.key!==cur().key)chk={date:iso(),key:cur().key,items:{}};
 function tierO(){for(var i=0;i<TIERS.length;i++)if(TIERS[i].id===cyc.tier)return TIERS[i];return TIERS[1];}
-function actEx(){return cur().ex.slice(0,tierO().n);}
+function actEx(){
+  var all=cur().ex,list=all.slice(0,tierO().n);
+  var last=all[all.length-1];
+  if(last&&last[0]==='Dead Hang'&&list.indexOf(last)===-1)list=list.concat([last]);
+  return list;}
 function setsFor(e){return cyc.tier==='min'?e[2]+1:e[2];}
 function wid(k,e){return k+'|'+e[0];}
 function getW(k,e){var v=weights[wid(k,e)];
   if(v!==undefined&&v!==null)return v;
-  if(e[1]==='new'||e[1]==='—')return null;
+  if(e[1]==='new'||e[1]==='—'||e[1]==='body')return null;
   var n=parseFloat(e[1]);return isNaN(n)?null:n;}
 function sortedLog(){return log.slice().sort(function(a,b){return new Date(a.date)-new Date(b.date);});}
 function last7(){var c=0,n=Date.now();sessions.forEach(function(s){
@@ -2939,7 +2974,7 @@ function vNext(){
 
   h+='<button class="btn '+(cheer?'ok':all?'go':'')+'" id="finish">'
    + svg(I.check,3)+(cheer?'Logged — '+w.name+' done':'Finish session')+'</button>'
-   +'<button class="btn ghost" id="skip">Swap to '+CYCLE[(cyc.i+1)%3].name+' — don\'t log this</button>';
+   +'<button class="btn ghost" id="skip">Swap to '+CYCLE[(cyc.i+1)%CYCLE.length].name+' — don\'t log this</button>';
 
   if(sessions.length){
     h+='<section><div class="sec-h"><h2>Recent sessions</h2></div><div class="divide">'
@@ -3545,7 +3580,7 @@ document.addEventListener('click',function(ev){
       log=load(K.log,null)||SEED.slice();cyc=load(K.cyc,{i:0,tier:'short'});
       sessions=load(K.ses,[]);weights=load(K.wt,{});food=load(K.food,{});water=load(K.water,{});
       recent=load('ledger.recent.v1',[]);ice=load('ledger.ice.v1',true);
-      var pl=load(K.plan,null);if(pl&&pl.length===3)CYCLE=pl;
+      var pl=load(K.plan,null);if(pl&&pl.length)CYCLE=pl;
       chk=load(K.chk,{date:'',key:'',items:{}});
       if(chk.date!==iso()||chk.key!==CYCLE[cyc.i].key)chk={date:iso(),key:CYCLE[cyc.i].key,items:{}};
     }
